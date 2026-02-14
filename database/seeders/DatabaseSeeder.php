@@ -16,17 +16,16 @@ class DatabaseSeeder extends Seeder
     {
         // Admin User
         User::firstOrCreate(
-        ['email' => 'admin@admin.com'],
+        ['email' => env('ADMIN_EMAIL', 'admin@admin.com')],
         [
-            'name' => 'Admin User',
-            'password' => Hash::make('password'),
-            'role' => 'admin',
+            'name' => 'Admin',
+            'password' => Hash::make(env('ADMIN_PASSWORD', 'ChangeMe123!')),
             'email_verified_at' => now(),
-        ]
-        );
+        ]);
 
         $this->call([
             CourtSeeder::class ,
+            AdminUserSeeder::class ,
         ]);
     }
 }
