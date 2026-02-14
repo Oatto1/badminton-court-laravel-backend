@@ -26,17 +26,17 @@ WORKDIR /app
 
 COPY . .
 
+# ✅ สร้าง Laravel cache directories ก่อน
+RUN mkdir -p storage/framework/views \
+    storage/framework/cache \
+    storage/framework/sessions \
+    bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
+
 # -------------------------
 # Install PHP Dependencies
 # -------------------------
 RUN composer install --no-dev --optimize-autoloader
-
-# -------------------------
-# Clear cache (ignore error if no .env yet)
-# -------------------------
-RUN php artisan config:clear || true
-RUN php artisan route:clear || true
-RUN php artisan view:clear || true
 
 ENV PORT=8080
 EXPOSE 8080
