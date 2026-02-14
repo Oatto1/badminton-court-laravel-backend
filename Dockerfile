@@ -26,8 +26,11 @@ WORKDIR /app
 
 COPY . .
 
-# ✅ สร้าง Laravel cache directories ก่อน
-RUN mkdir -p storage/framework/views \
+# -------------------------
+# Create Laravel Required Folders
+# -------------------------
+RUN mkdir -p \
+    storage/framework/views \
     storage/framework/cache \
     storage/framework/sessions \
     bootstrap/cache \
@@ -38,7 +41,18 @@ RUN mkdir -p storage/framework/views \
 # -------------------------
 RUN composer install --no-dev --optimize-autoloader
 
-ENV PORT=8080
+# -------------------------
+# Production Environment
+# -------------------------
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+
 EXPOSE 8080
 
-CMD php artisan serve --host=0.0.0.0 --port=$PORT
+# -------------------------
+# Start Application
+# -------------------------
+CMD php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan migrate --force && \
+    php -S 0.0.0.0:$PORT -t public
