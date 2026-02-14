@@ -52,7 +52,6 @@ EXPOSE 8080
 # -------------------------
 # Start Application
 # -------------------------
-CMD php artisan config:clear && \
-    php artisan route:clear && \
+CMD php artisan optimize:clear && \
     php artisan migrate --force && \
     php -S 0.0.0.0:$PORT -t public
