@@ -25,3 +25,9 @@ Thumbs.db
 /storage/framework/*
 /storage/logs/*
 /bootstrap/cache/*.php
+.styleci.yml
+CHANGELOG.md
+NUL
+php.ini
+start-container
+supervisord.conf
