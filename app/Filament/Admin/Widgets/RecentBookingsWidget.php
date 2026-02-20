@@ -6,72 +6,88 @@ use App\Models\Booking;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
 
 class RecentBookingsWidget extends BaseWidget
 {
     protected static ?int $sort = 2;
-    protected int | string | array $columnSpan = 'full';
-    protected static ?string $heading = 'Recent Bookings';
+
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Booking::with(['user', 'items.court'])->latest()
+                Booking::query()->latest()
             )
             ->columns([
-                Tables\Columns\TextColumn::make('booking_number')
-                    ->label('Booking #')
-                    ->searchable()
-                    ->weight('bold')
-                    ->color('primary'),
-
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Booked By')
                     ->searchable()
-                    ->icon('heroicon-m-user'),
-
-                Tables\Columns\TextColumn::make('user.email')
-                    ->label('Email')
+                    ->sortable()
+                    ->label('User'),
+                Tables\Columns\TextColumn::make('booking_number')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                    ->label('Booking No.'),
+                Tables\Columns\TextColumn::make('total_price')
+                    ->money('THB')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('items_summary')
                     ->label('Court / Time')
+                    ->html() // เพิ่มบรรทัดนี้เพื่อให้ใช้ <br> ได้
                     ->state(function (Booking $record): string {
                         return $record->items->map(function ($item) {
-                            $court = $item->court?->name ?? 'N/A';
+                            $courtName = $item->court?->name ?? 'N/A';
+                            
+                            // เพิ่มส่วนนี้เพื่อแก้ปัญหาชื่อสนามที่เป็น JSON ["..."]
+                            if (str_starts_with($courtName, '[') && str_ends_with($courtName, ']')) {
+                                $decoded = json_decode($courtName, true);
+                                if (is_array($decoded) && !empty($decoded)) {
+                                    $courtName = $decoded[0]; // ดึงชื่อแรกออกมา
+                                }
+                            }
                             $date = \Carbon\Carbon::parse($item->date)->format('d M Y');
                             $start = \Carbon\Carbon::parse($item->start_time)->format('H:i');
                             $end = \Carbon\Carbon::parse($item->end_time)->format('H:i');
-
-                            return $court . ' | ' . $date . ' ' . $start . '-' . $end;
-                        })->join(', ');
+                            return "{$courtName} | {$date} {$start}-{$end}";
+                        })->join('<br>'); // เปลี่ยนจาก , เป็น <br> เพื่อขึ้นบรรทัดใหม่
                     })
                     ->wrap(),
-
-                Tables\Columns\TextColumn::make('total_price')
-                    ->label('Amount')
-                    ->money('THB'),
-
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
                     ->badge()
-                        ->color(function ($state) {
-                            return match ($state) {
-                                'pending_payment' => 'warning',
-                                'confirmed' => 'success',
-                                'cancelled' => 'danger',
-                                'expired' => 'gray',
-                                default => 'secondary',
-                            };
-                        }),
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending', 'pending_payment' => 'gray',
+                        'confirmed', 'paid' => 'success',
+                        'cancelled' => 'danger',
+                        'completed' => 'info',
+                        'expired' => 'warning',
+                        default => 'warning',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Booked At')
-                    ->dateTime('d M Y H:i')
-                    ->sortable(),
+                    ->dateTime()
+                    ->sortable()
+                    ->label('Booked At'),
             ])
-            ->defaultSort('created_at', 'desc')
-            ->paginated([5, 10, 20]);
+            ->filters([
+                SelectFilter::make('user')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->label('Filter by User'),
+                Filter::make('created_at')
+                    ->form([
+                        DatePicker::make('date')
+                            ->label('Filter by Date'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['date'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', $date),
+                            );
+                    }),
+            ]);
     }
 }

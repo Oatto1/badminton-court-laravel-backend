@@ -13,19 +13,26 @@ class BookingForm
     {
         return $schema
             ->components([
-                Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->required(),
-                TextInput::make('booking_number')
-                    ->required(),
-                TextInput::make('total_price')
-                    ->required()
-                    ->numeric()
-                    ->prefix('$'),
-                TextInput::make('status')
-                    ->required()
-                    ->default('pending_payment'),
-                DateTimePicker::make('expires_at'),
-            ]);
+            Select::make('user_id')
+            ->relationship('user', 'name')
+            ->required(),
+            TextInput::make('booking_number')
+            ->required(),
+            TextInput::make('total_price')
+            ->required()
+            ->numeric()
+            ->prefix('$'),
+            Select::make('status')
+            ->options([
+                'pending' => 'Pending',
+                'paid' => 'Paid',
+                'confirmed' => 'Confirmed',
+                'cancelled' => 'Cancelled',
+                'expired' => 'Expired',
+            ])
+            ->required()
+            ->default('pending_payment'),
+            DateTimePicker::make('expires_at'),
+        ]);
     }
 }

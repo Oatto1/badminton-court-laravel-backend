@@ -37,7 +37,7 @@ class ExpireUnpaidBookings implements ShouldQueue
 
                                     // 2. Mark associated payment as expired if it's still pending
                                     // We use the relationship to find the payment
-                                    if ($booking->payment && $booking->payment->status === 'pending') {
+                                    if ($booking->payment && $booking->payment->status === 'pending_payment') {
                                         $booking->payment->update(['status' => 'expired']);
                                     }
 

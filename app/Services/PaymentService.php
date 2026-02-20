@@ -25,7 +25,7 @@ class PaymentService
             'current_currency' => 'THB',
             'amount' => $booking->total_amount,
             'status' => 'waiting',
-            'expired_at' => now()->addMinutes(15), // Payment window
+            'expired_at' => now()->addMinutes(1), // Payment window
             // 'payment_token' => Call external API to get QR payload? 
             // For simulation, we assume qr_ref IS the token/payload or we generate a dummy one.
             'payment_token' => '00020101021129370016A000000677010111' . Str::random(10), // Dummy TLV for QR

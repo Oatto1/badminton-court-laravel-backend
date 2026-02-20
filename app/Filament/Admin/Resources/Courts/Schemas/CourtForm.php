@@ -12,14 +12,14 @@ class CourtForm
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->required(),
-                TextInput::make('price_per_hour')
-                    ->required()
-                    ->numeric()
-                    ->default(210),
-                Toggle::make('is_active')
-                    ->required(),
-            ]);
+            TextInput::make('name')
+            ->required(),
+            TextInput::make('price_per_hour')
+            ->required()
+            ->numeric()
+            ->default(210),
+            Toggle::make('is_active')
+            ->required(),
+        ]);
     }
 }

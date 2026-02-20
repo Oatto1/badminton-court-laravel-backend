@@ -1,34 +1,27 @@
 <?php
 
-namespace App\Filament\Admin\Resources\Courts\Tables;
+namespace App\Filament\Admin\Resources\OperatingTimes\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
 
-class CourtsTable
+class OperatingTimesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
             ->columns([
-                // TextColumn::make('id')
-                //     ->label('ID'),
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('price_per_hour')
-                    ->numeric()
-                    ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime()
+                TextColumn::make('day')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
+                    ->searchable(),
+                TextColumn::make('open_time')
+                    ->time('H:i'),
+                TextColumn::make('close_time')
+                    ->time('H:i'),
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

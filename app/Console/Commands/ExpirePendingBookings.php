@@ -25,6 +25,6 @@ class ExpirePendingBookings extends Command
      */
     public function handle()
     {
-        //
+    //
     }
 }

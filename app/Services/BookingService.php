@@ -22,11 +22,28 @@ class BookingService
         $courts = Court::where('is_active', true)->get();
         $dateCarbon = Carbon::parse($date);
 
-        // Define operating hours: 10:00 - 23:00 (13 slots)
-        $startHour = 10;
-        $endHour = 23;
-        $slots = [];
+        // Fetch global operating time for this day (Monday, Tuesday, etc.)
+        $dayName = $dateCarbon->format('l');
+        $operatingTime = \App\Models\OperatingTime::where('day', $dayName)->first();
 
+        $startHour = 10; // Default
+        $endHour = 24; // Default (midnight)
+        $openTimeStr = '10:00';
+        $closeTimeStr = '24:00';
+
+        if ($operatingTime) {
+            $startHour = (int)substr($operatingTime->open_time, 0, 2);
+            $endHour = (int)substr($operatingTime->close_time, 0, 2);
+            $openTimeStr = substr($operatingTime->open_time, 0, 5);
+            $closeTimeStr = substr($operatingTime->close_time, 0, 5);
+            if ($endHour === 0) {
+                $endHour = 24;
+                $closeTimeStr = '24:00';
+            }
+        }
+
+        // Generate slots based on global operating hours
+        $slots = [];
         for ($i = $startHour; $i < $endHour; $i++) {
             $slots[] = [
                 'start' => sprintf('%02d:00', $i),
@@ -52,7 +69,7 @@ class BookingService
         })
             ->get();
 
-        $availability = $courts->map(function ($court) use ($slots, $bookedItems, $dateCarbon) {
+        $availability = $courts->map(function ($court) use ($slots, $bookedItems, $dateCarbon, $openTimeStr, $closeTimeStr) {
             $courtSlots = collect($slots)->map(function ($slot) use ($court, $bookedItems, $dateCarbon) {
                     // If date is today, mark past slots as unavailable
                     $isPast = false;
@@ -71,7 +88,7 @@ class BookingService
                         'start' => $slot['start'],
                         'end' => $slot['end'],
                         'is_booked' => $isBooked,
-                        'price' => $court->price_per_hour, // Simpler logic for now
+                        'price' => $court->price_per_hour,
                         ];
                     }
                     );
@@ -79,6 +96,8 @@ class BookingService
                     return [
                     'id' => $court->id,
                     'name' => $court->name,
+                    'open_time' => $openTimeStr,
+                    'close_time' => $closeTimeStr,
                     'slots' => $courtSlots,
                     ];
                 });
@@ -148,7 +167,7 @@ class BookingService
                     'booking_number' => 'BK-' . strtoupper(Str::random(8)),
                     'total_price' => $totalPrice,
                     'status' => 'pending_payment',
-                    'expires_at' => Carbon::now()->addMinutes(5),
+                    'expires_at' => Carbon::now()->addMinutes(1),
                 ]);
 
                 // 3. Create Items
@@ -161,7 +180,7 @@ class BookingService
                     'user_id' => $user->id,
                     'amount' => $totalPrice,
                     'method' => 'promptpay',
-                    'status' => 'pending',
+                    'status' => 'pending_payment',
                     'transaction_ref' => null, // Will be filled when paid
                 ]);
 

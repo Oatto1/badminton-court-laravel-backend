@@ -28,10 +28,17 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         // Auto-expire pending bookings that have passed their expiry time
-        $request->user()->bookings()
+        $expiredBookings = $request->user()->bookings()
             ->where('status', 'pending_payment')
             ->where('expires_at', '<', now())
-            ->update(['status' => 'expired']);
+            ->get();
+
+        foreach ($expiredBookings as $booking) {
+            if ($booking->payment && $booking->payment->status === 'pending_payment') {
+                $booking->payment->update(['status' => 'expired']);
+            }
+            $booking->update(['status' => 'expired']);
+        }
 
         $bookings = $request->user()->bookings()
             ->with(['items.court', 'payment'])
@@ -74,6 +81,9 @@ class BookingController extends Controller
         $this->authorize('view', $booking);
 
         if ($booking->status === 'pending_payment' && $booking->expires_at < now()) {
+            if ($booking->payment && $booking->payment->status === 'pending_payment') {
+                $booking->payment->update(['status' => 'expired']);
+            }
             $booking->update(['status' => 'expired']);
         }
 
@@ -88,7 +98,14 @@ class BookingController extends Controller
             return response()->json(['message' => 'Cannot cancel paid booking via API. Contact support.'], 400);
         }
 
+        // Update Booking
         $booking->update(['status' => 'cancelled']);
+
+        // Update Payment
+        if ($booking->payment && $booking->payment->status !== 'paid') {
+            $booking->payment->update(['status' => 'cancelled']);
+        }
+
         return response()->json(['message' => 'Booking cancelled']);
     }
 }

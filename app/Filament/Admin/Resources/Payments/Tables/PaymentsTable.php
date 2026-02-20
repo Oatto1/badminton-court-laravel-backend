@@ -14,10 +14,10 @@ class PaymentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('id')
-                    ->label('ID'),
-                TextColumn::make('booking.id')
-                    ->searchable(),
+                // TextColumn::make('id')
+                //     ->label('ID'),
+                // TextColumn::make('booking.id')
+                //     ->searchable(),
                 TextColumn::make('user.name')
                     ->searchable(),
                 TextColumn::make('amount')
@@ -26,7 +26,15 @@ class PaymentsTable
                 TextColumn::make('method')
                     ->searchable(),
                 TextColumn::make('status')
-                    ->searchable(),
+                ->badge()
+                ->color(fn (string $state): string => match ($state) {
+                        'pending', 'pending_payment' => 'gray',
+                        'confirmed', 'paid' => 'success',
+                        'cancelled' => 'danger',
+                        'completed' => 'info',
+                        'expired' => 'warning',
+                        default => 'warning',
+                    }),
                 TextColumn::make('transaction_ref')
                     ->searchable(),
                 TextColumn::make('created_at')
